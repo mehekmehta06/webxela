@@ -1,7 +1,9 @@
+import os
 from flask import Flask, request, jsonify
 import smtplib
 from email.mime.text import MIMEText
-import os
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -14,6 +16,12 @@ EMAIL = os.getenv('EMAIL')
 PASSWORD = os.getenv('EMAIL_PASSWORD')
 
 contact = Flask(__name__)
+
+# Configure the Google Sheets API
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+creds = ServiceAccountCredentials.from_json_keyfile_name(os.getenv('GOOGLE_SHEETS_CREDENTIALS'), scope)
+client = gspread.authorize(creds)
+sheet = client.open(os.getenv('GOOGLE_SHEET_NAME')).sheet1
 
 def send_thank_you_email(recipient_email, recipient_name):
     subject = "Thank You for Your Submission"
@@ -43,6 +51,8 @@ def submit():
     
     if not all([name, email,company_name,phone_no, message]):
         return jsonify({"error": "Missing data"}), 400
+    
+    sheet.append_row([name, email,company_name,phone_no, message])
     
     # Send the thank you email
     send_thank_you_email(email, name)

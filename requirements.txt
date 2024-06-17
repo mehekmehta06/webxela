@@ -1,1 +1,2 @@
 pip install Flask python-dotenv
+pip install gspread oauth2client
